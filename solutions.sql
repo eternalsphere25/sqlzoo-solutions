@@ -245,3 +245,323 @@ WHERE population >= ALL(SELECT (population*3)
                         WHERE x.continent = y.continent
                         AND population >0
                         AND x.name <> y.name)
+
+
+
+/*
+SUM and COUNT
+https://sqlzoo.net/wiki/SUM_and_COUNT
+*/
+
+-- 1. Total world population
+SELECT SUM(population)
+FROM world
+
+-- 2. List of continents
+SELECT DISTINCT(continent)
+FROM world
+
+-- 3. GDP of Africa
+SELECT SUM(gdp) AS total_gdp_africa
+FROM world
+WHERE continent = 'Africa'
+
+-- 4. Count the big countries
+SELECT COUNT(name)
+FROM world
+WHERE area >= 1000000
+
+-- 5. Baltic states population
+SELECT SUM(population)
+FROM world
+WHERE name IN ('Estonia', 'Latvia', 'Lithuania')
+
+-- 6. Counting the countries of each continent
+SELECT continent, COUNT(name) AS num_of_countries
+FROM world
+GROUP BY continent
+
+-- 7. Counting big countries in each continent
+SELECT continent, COUNT(name)
+FROM world
+WHERE population >= 10000000
+GROUP BY continent
+
+-- 8. Counting big continents
+SELECT continent
+FROM world
+GROUP BY continent
+HAVING SUM(population) >= 100000000
+
+
+
+/*
+The nobel table can be used to practice more SUM and COUNT functions.
+https://sqlzoo.net/wiki/The_nobel_table_can_be_used_to_practice_more_SUM_and_COUNT_functions.
+*/
+
+-- 1. Show the total number of prizes awarded
+SELECT COUNT(winner)
+FROM nobel
+
+-- 2. List each subject - just once
+SELECT DISTINCT(subject)
+FROM nobel
+
+-- 3. Show the total number of prizes awared for Physics
+SELECT COUNT(winner) AS physics_prizes
+FROM nobel
+WHERE subject = 'Physics'
+
+-- 4. For each subject show the subject and the number of prizes
+SELECT subject, COUNT(winner) as num_prizes
+FROM nobel
+GROUP BY subject
+-- ORDER BY num_prizes DESC
+
+-- 5. For each subject show the first year that the prize was awarded
+SELECT subject, MIN(yr) AS first_awarded
+FROM nobel
+GROUP BY subject
+-- ORDER BY first_awarded DESC
+
+-- 6. For each subject show the number of prizes awarded in the year 2000
+SELECT subject, COUNT(winner) AS num_awarded
+FROM nobel
+WHERE yr = 2000
+GROUP BY subject
+-- ORDER BY num_awarded DESC
+
+-- 7. Show the number of different winners for each subject
+SELECT subject, COUNT(DISTINCT(winner)) AS num_distinct_winners
+FROM nobel
+GROUP BY subject
+
+-- 8. For each subject show how many years have had prizes awarded
+SELECT subject, COUNT(DISTINCT(yr)) AS num_times_awarded
+FROM nobel
+GROUP BY subject
+
+-- 9. Show the years in which three prizes were given for Physics
+SELECT yr
+FROM nobel
+WHERE subject = 'Physics'
+GROUP BY yr
+HAVING COUNT(subject) = 3
+
+-- 10. Show winners who have won more than once
+SELECT winner
+FROM nobel
+GROUP BY winner
+HAVING COUNT(yr) >= 2
+
+-- 11. Show winners who have won more than one subject
+SELECT winner
+FROM nobel
+GROUP BY winner
+HAVING COUNT(DISTINCT(subject)) >= 2
+
+-- 12. Show the year and subject where 3 prizes were given. Show only years 2000 onwards
+SELECT yr, subject
+FROM nobel
+WHERE yr >= 2000
+GROUP BY yr, subject
+HAVING COUNT(winner) = 3
+
+
+
+/*
+The JOIN operation
+https://sqlzoo.net/wiki/The_JOIN_operation
+*/
+
+-- 1.
+SELECT matchid, player
+FROM goal
+WHERE teamid = 'GER'
+
+-- 2.
+SELECT id, stadium, team1, team2
+FROM game
+WHERE id = 1012
+
+-- 3.
+SELECT player, teamid, stadium, mdate
+FROM game JOIN goal ON (id = matchid)
+WHERE teamid = 'GER'
+
+-- 4.
+SELECT team1, team2, player
+FROM game JOIN goal ON (id = matchid)
+WHERE player LIKE 'Mario%'
+
+-- 5.
+SELECT player, teamid, coach, gtime
+FROM goal JOIN eteam ON (teamid = id)
+WHERE gtime <= 10
+
+-- 6.
+SELECT mdate, teamname
+FROM game JOIN eteam ON (team1 = eteam.id)
+WHERE coach = 'Fernando Santos'
+
+-- 7.
+SELECT player
+FROM goal JOIN game ON (matchid = id)
+WHERE stadium = 'National Stadium, Warsaw'
+
+-- 8.
+SELECT DISTINCT(player)
+FROM goal JOIN game ON (matchid = id)
+WHERE (team1 = 'GER' OR team2 = 'GER')
+AND teamid <> GER
+
+-- 9.
+SELECT teamname, COUNT(player) AS total_goals_scored
+FROM eteam JOIN goal ON (id = teamid)
+GROUP BY teamname
+
+-- 10.
+SELECT stadium, COUNT(matchid) AS num_goals
+FROM game JOIN goal ON (id = matchid)
+GROUP BY stadium
+
+-- 11.
+SELECT matchid.mdate, COUNT(teamid) AS num_goals
+FROM game JOIN goal ON (matchid = id)
+WHERE (team1 = 'POL' OR team2 = 'POL')
+GROUP BY matchid.mdate
+
+-- 12.
+SELECT matchid, mdate, COUNT(teamid) as num_goals
+FROM goal JOIN game ON (matchid = id)
+WHERE teamid = 'GER'
+GROUP BY matchid, mdate
+
+-- 13.
+SELECT mdate, team1,
+    SUM((CASE WHEN teamid=team1 THEN 1 ELSE 0 END)) AS score1,
+    team2,
+    SUM((CASE WHEN teamid=team2 THEN 1 ELSE 0 END)) AS score2
+FROM game LEFT JOIN goal ON (id = matchid)
+GROUP BY mdate, team1, team2
+
+
+
+/*
+More JOIN operations
+https://sqlzoo.net/wiki/More_JOIN_operations
+*/
+
+-- 1. 1962 movies
+SELECT id, title
+FROM movie
+WHERE yr=1962
+
+-- 2. When was Citizen Kane released?
+SELECT yr
+FROM movie
+WHERE title = 'Citizen Kane'
+
+-- 3. Star Trek movies
+SELECT id, title, yr
+FROM movie
+WHERE title LIKE '%Star Trek%'
+ORDER BY yr
+
+-- 4. id for actor Glenn Close
+SELECT id
+FROM actor
+WHERE name = 'Glenn Close'
+
+-- 5. id for Casablanca
+SELECT id
+FROM movie
+WHERE title = 'Casablanca'
+
+-- 6. Cast list for Casablanca
+SELECT name
+FROM actor JOIN casting ON (id = actorid)
+WHERE movieid = 11768
+
+SELECT name
+FROM actor JOIN casting ON (id = actorid)
+WHERE movieid = (SELECT id
+                 FROM movie
+                 WHERE title = 'Casablanca')
+
+-- 7. Alien cast list
+SELECT name
+FROM actor JOIN casting ON (id = actorid)
+WHERE movieid = (SELECT id
+                 FROM movie
+                 WHERE title = 'Alien')
+
+-- 8. Harrison Ford movies
+SELECT title
+FROM movie JOIN casting ON (id = movieid)
+WHERE actorid = (SELECT id
+                 FROM actor
+                 WHERE name = 'Harrison Ford')
+
+-- 9. Harrison Ford as a supporting actor
+SELECT title
+FROM movie JOIN casting ON (id = movieid)
+WHERE actorid = (SELECT id
+                 FROM actor
+                 WHERE name = 'Harrison Ford')
+AND ord <> 1
+
+-- 10. Lead actors in 1962 movies
+SELECT title, name
+FROM casting
+JOIN movie ON (movieid = movie.id)
+JOIN actor ON (actorid = actor.id)
+WHERE yr = 1962
+AND ord = 1
+
+-- 11. Busy years for Rock Hudson
+SELECT yr, COUNT(title) AS num_movies
+FROM movie
+JOIN casting ON (movie.id = movieid)
+JOIN actor ON (actor.id = actorid)
+WHERE name = 'Rock Hudson'
+GROUP BY yr
+HAVING COUNT(title) > 2
+
+-- 12. Lead actor in Julie Andrews movies
+SELECT title, name
+FROM casting
+JOIN movie ON (movieid = movie.id)
+JOIN actor ON (actorid = actor.id)
+WHERE movie.id IN (SELECT movie.id
+                   FROM casting
+                   JOIN movie ON (movieid = movie.id)
+                   JOIN actor ON (actorid = actor.id)
+                   WHERE name = 'Julie Andrews')
+AND ord = 1
+
+-- 13. Actors with 15 leading roles
+SELECT name
+FROM casting
+JOIN movie ON (movieid = movie.id)
+JOIN actor ON (actorid = actor.id)
+WHERE ord = 1
+GROUP BY name
+HAVING COUNT(ord) >= 15
+
+-- 14. released in the year 1978
+SELECT title, COUNT(actorid) AS num_actors
+FROM casting
+JOIN movie ON (movieid = movie.id)
+WHERE yr = 1978
+GROUP BY title
+ORDER BY num_actors DESC, title
+
+-- 15. with 'Art Garfunkel'
+SELECT DISTINCT(name)
+FROM casting JOIN actor ON (actorid = actor.id)
+WHERE movieid IN (SELECT movieid
+                  FROM casting JOIN actor ON (actorid = actor.id)
+                  WHERE name = 'Art Garfunkel')
+AND name <> 'Art Garfunkel'
