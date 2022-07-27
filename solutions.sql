@@ -1,5 +1,90 @@
 /*
-SELECT from WORLD Tutorial
+1: SELECT name
+https://sqlzoo.net/wiki/SELECT_from_WORLD_Tutorial
+*/
+
+-- 1. Find the country that start with Y
+SELECT name
+FROM world
+WHERE name LIKE 'Y%'
+
+-- 2. Find the countries that end with y
+SELECT name
+FROM world
+WHERE name LIKE '%y'
+
+-- 3. Find the countries that contain the letter x
+SELECT name
+FROM world
+WHERE name LIKE '%x%'
+
+-- 4. Find the countries that end with land
+SELECT name
+FROM world
+WHERE name LIKE '%land'
+
+-- 5. Find the countries that start with C and end with ia
+SELECT name
+FROM world
+WHERE name LIKE 'C%ia'
+
+-- 6. Find the country that has oo in the name
+SELECT name
+FROM world
+WHERE name LIKE '%oo%'
+
+-- 7. Find the countries that have three or more a in the name
+SELECT name
+FROM world
+WHERE name LIKE '%a%a%a%'
+
+-- 8. Find the countries that have "t" as the second character
+SELECT name
+FROM world
+WHERE name LIKE '_t%'
+ORDER BY name
+
+-- 9. Find the countries that have two "o" characters separated by two others
+SELECT name
+FROM world
+WHERE name LIKE '%o__o%'
+
+-- 10. Find the countries that have exactly four characters
+SELECT name
+FROM world
+WHERE name LIKE '____'
+
+-- 11. Find the country where the name is the capital city
+SELECT name
+FROM world
+WHERE name = capital
+
+-- 12. Find the country where the capital is the country plus "City"
+SELECT name
+FROM world
+WHERE capital LIKE CONCAT(name, 'City')
+
+-- 13. Find the capital and the name where the capital includes the name of the country
+SELECT capital, name
+FROM world
+WHERE capital LIKE CONCAT(name, '%')
+
+-- 14. Find the capital and the name where the capital is an extension of the name of the country
+SELECT capital, name
+FROM world
+WHERE name <> capital
+AND capital LIKE CONCAT(name, '%')
+
+-- 15. Show the name and the extension where the capital is an extension of name of the country
+SELECT name, REPLACE(capital, name, '') AS extension
+FROM world
+WHERE capital LIKE CONCAT(name, '%')
+AND capital <> name
+
+
+
+/*
+2: SELECT from WORLD
 https://sqlzoo.net/wiki/SELECT_from_WORLD_Tutorial
 */
 
@@ -77,7 +162,7 @@ AND name NOT LIKE '% %'
 
 
 /*
-SELECT from NOBEL Tutorial
+3: SELECT from NOBEL
 https://sqlzoo.net/wiki/SELECT_from_Nobel_Tutorial
 */
 
@@ -159,7 +244,7 @@ ORDER BY yr DESC
 
 
 /*
-SELECT within SELECT Tutorial
+4: SELECT within SELECT
 https://sqlzoo.net/wiki/SELECT_within_SELECT_Tutorial
 */
 
@@ -249,7 +334,7 @@ WHERE population >= ALL(SELECT (population*3)
 
 
 /*
-SUM and COUNT
+5: SUM and COUNT
 https://sqlzoo.net/wiki/SUM_and_COUNT
 */
 
@@ -371,7 +456,7 @@ HAVING COUNT(winner) = 3
 
 
 /*
-The JOIN operation
+6: JOIN
 https://sqlzoo.net/wiki/The_JOIN_operation
 */
 
@@ -449,7 +534,7 @@ GROUP BY mdate, team1, team2
 
 
 /*
-More JOIN operations
+7: More JOIN operations
 https://sqlzoo.net/wiki/More_JOIN_operations
 */
 
@@ -565,3 +650,141 @@ WHERE movieid IN (SELECT movieid
                   FROM casting JOIN actor ON (actorid = actor.id)
                   WHERE name = 'Art Garfunkel')
 AND name <> 'Art Garfunkel'
+
+
+
+/*
+8: Using NULL
+https://sqlzoo.net/wiki/Using_Null
+*/
+
+-- 1. List the teachers who have NULL for their department
+SELECT name
+FROM teacher
+WHERE dept IS NULL
+
+-- 2. Note the INNER JOIN misses the teachers with no department and the departments with no teacher
+SELECT teacher.name, dept.name
+FROM teacher INNER JOIN dept ON (teacher.dept = dept.id)
+
+-- 3. Use a different JOIN so that all teachers are listed
+SELECT teacher.name, dept.name
+FROM teacher LEFT JOIN dept ON (teacher.dept = dept.id)
+
+-- 4. Use a different JOIN so that all departments are listed
+SELECT teacher.name, dept.name
+FROM teacher RIGHT JOIN dept ON (teacher.dept = dept.id)
+
+-- 5. Use COALESCE to print the mobile number. Use the number '07986 444 2266' if there is no number given.
+SELECT name, COALESCE(mobile, '07986 444 2266')
+FROM teacher
+
+-- 6. Use the COALESCE function and a LEFT JOIN to print the teacher name and deparmtent name. Use the string 'None' when there is no department
+SELECT teacher.name, COALESCE(dept.name, 'None')
+FROM teacher LEFT JOIN dept ON (teacher.dept = dept.id)
+
+-- 7. Use COUNT to show the number of teachers and the number of mobile phones
+SELECT COUNT(teacher.name) AS num_teachers, COUNT(mobile) AS num_mobiles
+FROM teacher
+
+-- 8. Use COUNT and GROUP BY dept.name to show each department and the number of staff. Use a RIGHT JOIN to ensure that the ENgineering department is listed
+SELECT dept.name AS department, COUNT(teacher.dept) AS num_staff
+FROM teacher RIGHT JOIN dept ON (teacher.dept = dept.id)
+GROUP BY department
+
+-- 9. Use CASE to show the name of each teacher followed by 'Sci' if the teacher is in dept 1 or 2 and 'Art' otherwise
+SELECT name, CASE 
+WHEN dept = 1 THEN 'Sci'
+WHEN dept = 2 THEN 'Sci'
+ELSE 'Art' END AS subject
+FROM teacher
+
+-- 10. Use CASE to show the name of each teacher followed by 'Sci' if the teacher is in dept 1 or 2, show 'Art' if the teacher's dept is 3 and 'None' otherwise
+SELECT name, CASE
+WHEN dept = 1 THEN 'Sci'
+WHEN dept = 2 THEN 'Sci'
+WHEN dept = 3 THEN 'Art'
+ELSE 'None' END AS subject
+FROM teacher
+
+
+
+/*
+9: Self join
+https://sqlzoo.net/wiki/Self_join
+*/
+
+-- 1. How many stops are in the database
+SELECT COUNT(id) AS num_stops
+FROM stops
+
+-- 2. Find the id value for the stop 'Craiglockhart'
+SELECT id
+FROM stops
+WHERE name = 'Craiglockhart'
+
+-- 3. Give the id and name for the stops on the '4' 'LRT' service
+SELECT id, name
+FROM stops JOIN route ON (id = stop)
+WHERE num = 4 AND company = 'LRT'
+ORDER BY pos
+
+-- 4. Add a HAVING clause to restrict the output to these two routes
+SELECT company, num, COUNT(*)
+FROM route WHERE stop = 149 OR stop = 53
+GROUP BY company, num
+HAVING COUNT(*) = 2
+
+-- 5. Change the query so that it shows the services from Craiglockhart to London Road
+SELECT a.company, a.num, a.stop, b.stop
+FROM route a JOIN route b ON (a.company = b.company AND a.num = b.num)
+WHERE a.stop = 53 AND b.stop = (SELECT id
+                                FROM stops
+                                WHERE name = 'London Road')
+
+-- 6. Change the query so that the services between 'Craiglockhart' and 'London Road' are shown.
+SELECT a.company, a.num, stopa.name, stopb.name
+FROM route a JOIN route b ON (a.company = b.company AND a.num = b.num)
+JOIN stops stopa ON (a.stop = stopa.id)
+JOIN stops stopb ON (b.stopb = stopb.id)
+WHERE stopa.name = 'Craiglockhart' AND stopb.name = 'London Road'
+
+-- 7. Give a list of all the services which connect stops 115 and 137 ('Haymarket' and 'Leith')
+SELECT DISTINCT(a.company), a.num
+FROM route a JOIN route b ON (a.company = b.company AND a.num = b.num)
+JOIN stops stopa ON (a.stop = stopa.id)
+JOIN stops stopb ON (b.stop - stopb.id)
+WHERE stopa.name = 'Haymarket' AND stopb.name = 'Leith'
+
+-- 8. Give a list of the services which connect the stops 'Craiglockhart' and 'Tollcross'
+SELECT a.company, a.num
+FROM route a JOIN route b ON (a.company = b.company AND a.num = b.num)
+JOIN stops stopa ON (a.stop = stopa.id)
+JOIN stops stopb ON (b.stop - stopb.id)
+WHERE stop1.name = 'Craiglockhart' AND stop2.name = 'Tollcross'
+
+-- 9. Give a distinct list of the stops which may be reacher from 'Craiglockhart' by taking the bus, including 'Craiglockhart' itself, offered by the LRT company. Include the company and bus no. of the relevant services
+SELECT stop2.name, a.company, a.num
+FROM route a JOIN route b ON (a.company = b.company AND a.num = b.num)
+JOIN stops stopa ON (a.stop = stopa.id)
+JOIN stops stopb ON (b.stop - stopb.id)
+WHERE stop1.name = 'Craiglockhart' AND a.company = 'LRT'
+
+-- 10. Find the routes involving two buses that can go from Craiglockhart to Lochend. Show the bus no. and copmany for the first bus, the name of hte stop for the transfer, and the bus no and company for the second bus
+SELECT initial.num, initial.company, initial.transfer, final.num, final.company
+FROM (SELECT DISTINCT(a.num, a.company, stop1.name AS start, stop2.name AS 
+      transfer)
+      FROM route a JOIN route b ON (a.num = b.num AND a.company = b.company)
+      JOIN stops stop1 ON (stop1.id = a.stop)
+      JOIN stops stop2 ON (stop2.id = b.stop)
+      WHERE stop1.name = 'Craiglockhart' AND stop2.name <> 'Craiglockhart')
+      AS initial
+JOIN (SELECT DISTINCT(c.num, c.company, stop3.name AS start, stop4.name AS 
+      transfer)
+      FROM route c JOIN route d ON (c.num = d.num AND c.company = d.company)
+      JOIN stops stop3 ON (stop3.id = c.stop)
+      JOIN stops stop4 ON (stop4.id = d.stop)
+      WHERE stop3.name = 'Lochend' AND stop2.name <> 'Lochend')
+      AS final
+ON (initial.transfer = final.transfer)
+ORDER BY initial.num, initial.transfer
